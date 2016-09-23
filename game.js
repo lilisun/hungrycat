@@ -2,6 +2,7 @@
 todo:
     ~clean up code~
     use onkeyup or whatever
+        put the scale thing in an isdown thing?
     add other keys as obstacles
         possibility: make them type words
 
@@ -57,7 +58,8 @@ function preload() {
     //name, location, width, height
     // game.load.spritesheet('playerSprite', 'assets/butter.png', 1024, 1024);
     // game.load.spritesheet('hatSprite', 'assets/hat.png', 50, 50);
-    game.load.spritesheet('platformSprite', 'assets/breads.png', 40, 42);
+    game.load.spritesheet('indicators', 'assets/indicators.png', 40, 42);
+    game.load.spritesheet('items', 'assets/items.png', 63, 59);
     game.load.spritesheet('cat', 'assets/cat.png', 270, 214);
 
     game.load.audio('jumpSound', 'assets/bloop.wav');
@@ -80,17 +82,25 @@ function create() {
     // keys[4]= game.input.keyboard.addKey(Phaser.Keyboard.W); //22
 
     keys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A);
+    keys[6] = game.input.keyboard.addKey(Phaser.Keyboard.G);
+    keys[11]= game.input.keyboard.addKey(Phaser.Keyboard.L);
+
+    keys[0].onDown.add(keyDown, this);
+    keys[6].onDown.add(keyDown, this);
+    keys[11].onDown.add(keyDown, this);
+    keys[0].onUp.add(keyUp, this);
+    keys[6].onUp.add(keyUp, this);
+    keys[11].onUp.add(keyUp, this);
+
     keys[1] = game.input.keyboard.addKey(Phaser.Keyboard.B);
     keys[2] = game.input.keyboard.addKey(Phaser.Keyboard.C);
     keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.D);
     keys[4] = game.input.keyboard.addKey(Phaser.Keyboard.E);
     keys[5] = game.input.keyboard.addKey(Phaser.Keyboard.F);
-    keys[6] = game.input.keyboard.addKey(Phaser.Keyboard.G);
     keys[7] = game.input.keyboard.addKey(Phaser.Keyboard.H);
     keys[8] = game.input.keyboard.addKey(Phaser.Keyboard.I);
     keys[9] = game.input.keyboard.addKey(Phaser.Keyboard.J);
     keys[10]= game.input.keyboard.addKey(Phaser.Keyboard.K);
-    keys[11]= game.input.keyboard.addKey(Phaser.Keyboard.L);
     keys[12]= game.input.keyboard.addKey(Phaser.Keyboard.M);
     keys[13]= game.input.keyboard.addKey(Phaser.Keyboard.N);
     keys[14]= game.input.keyboard.addKey(Phaser.Keyboard.O);
@@ -112,7 +122,7 @@ function create() {
     indicators = game.add.group();
     for (var i=0;i<3; i++){
 
-        var newPlatform = indicators.create(480+i*40,150,'platformSprite');
+        var newPlatform = indicators.create(480+i*40,150,'indicators');
 
         newPlatform.anchor.setTo(0.5,0.5);
 
@@ -120,7 +130,11 @@ function create() {
     }
 
     items = game.add.group();
-    items.create(0,0);
+
+    var a = items.create(game.width-120,game.height*0.6,'items');
+    a.frame=0;
+    var b = items.create(game.width-60,game.height*0.6,'items');
+    b.frame=1;
 
     menu = game.add.tileSprite(0, 0, 1024, 1024, 'menubackground');
     menu.alpha=0.9;
@@ -145,8 +159,46 @@ function initialize(){
     //  set the player's score to zero
     score = 0;
     life = 100;
+}
 
-    placeToasts();
+function keyDown(key){
+    console.log("ugh");
+    if (mode == 'game'){
+        var currentKey=-1;
+        switch(key.keyCode){
+            case 65:
+                currentKey=0;
+                break;
+            case 71:
+                currentKey=1;
+                break;
+            case 76:
+                currentKey=2;
+                break;
+            default:
+                //do nothing
+        }
+        checkCycle(currentKey);
+        indicators.children[currentKey].scale = new Phaser.Point(1.2,1.2);
+        indicators.children[(currentKey+1)%3].scale = new Phaser.Point(1,1);
+        indicators.children[(currentKey+2)%3].scale = new Phaser.Point(1,1);
+    }
+}
+
+function keyUp(key){
+    //scale = 1?
+}
+
+function checkCycle(key){
+    if (key==cycle){
+        if (life<100){
+            life = life+1;
+            indicators.children[cycle].tint=0x999999;
+            cycle=cycle+1;
+            if (cycle>2)
+                cycle=0;
+        }
+    }
 }
 
 function update() {
@@ -167,7 +219,7 @@ function update() {
                 console.log("incoming");
                 var which = Math.floor(Math.random()*2);
                 // platforms.children[3+which].tint=0xffffff;
-                items.children[3+which].alpha=1;
+                items.children[which].alpha=1;
                 clear=false;
                 target=3+which;
             }
@@ -175,7 +227,6 @@ function update() {
         life = life-0.2;
         for (var i=0;i<numPlatforms; i++){
             indicators.children[cycle].tint=0xffffff;
-
 
             if (keys[i].isDown){
                 // console.log(i,keys[i]);
@@ -194,19 +245,19 @@ function update() {
                     score = score+1;
                 }
 
-                var j=0;
-                indicators.forEach(function(p){
-                    if (j==i) 
-                        p.scale=new Phaser.Point(1.2,1.2);
-                    j=j+1;
-                });
+                // var j=0;
+                // indicators.forEach(function(p){
+                //     if (j==i) 
+                //         p.scale=new Phaser.Point(1.2,1.2);
+                //     j=j+1;
+                // });
             } else {
-                var j=0;
-                indicators.forEach(function(p){
-                    if (j==i) 
-                        p.scale=new Phaser.Point(1,1);
-                    j=j+1;
-                })
+                // var j=0;
+                // indicators.forEach(function(p){
+                //     if (j==i) 
+                //         p.scale=new Phaser.Point(1,1);
+                //     j=j+1;
+                // })
             }
         }
         
