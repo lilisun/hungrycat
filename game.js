@@ -1,5 +1,6 @@
 /*
 todo:
+    ~clean up code~
     use onkeyup or whatever
     add other keys as obstacles
         possibility: make them type words
@@ -34,21 +35,21 @@ var menu; //the menu background, to fade stuff out
 var startMenu; //the actual text/image that goes on the menus
 var endMenu;
 
-var platforms; //the group we'll hold all the platforms in
+var cat;
+
+var indicators; //group for the AGL indicators, for input feedback
+var items; //group for incoming objects
+
 var score; //this will just be an integer (whole number)
-var scoreText;
 var scoreDisplay; //the text object thingie
 var life;
-var jumpAudio; //the sound when the player jumps
-var numPlatforms=5;
 
+var jumpAudio; //the sound when the player jumps
+
+var numPlatforms=5;
 var cycle=0; //keep track of the cycling 3 letters
 var clear=true;
 var target=0;
-
-//use this to randomize the order the letters are placed
-var toastFrames = [0,6,11,8,22];
-//after toasts are placed, use it to keep track of score.
  
 var keys=[];
 
@@ -57,6 +58,7 @@ function preload() {
     // game.load.spritesheet('playerSprite', 'assets/butter.png', 1024, 1024);
     // game.load.spritesheet('hatSprite', 'assets/hat.png', 50, 50);
     game.load.spritesheet('platformSprite', 'assets/breads.png', 40, 42);
+    game.load.spritesheet('cat', 'assets/cat.png', 270, 214);
 
     game.load.audio('jumpSound', 'assets/bloop.wav');
 
@@ -71,34 +73,54 @@ function create() {
 
     //  we use this function to enable input from the keys. 
     //  one for each keyboard key!
-    keys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A); //0
-    keys[1] = game.input.keyboard.addKey(Phaser.Keyboard.G); //6
-    keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.I); //8
-    keys[2]= game.input.keyboard.addKey(Phaser.Keyboard.L); //11
-    keys[4]= game.input.keyboard.addKey(Phaser.Keyboard.W); //22
+    // keys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A); //0
+    // keys[1] = game.input.keyboard.addKey(Phaser.Keyboard.G); //6
+    // keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.I); //8
+    // keys[2]= game.input.keyboard.addKey(Phaser.Keyboard.L); //11
+    // keys[4]= game.input.keyboard.addKey(Phaser.Keyboard.W); //22
 
-    // Phaser.ArrayUtils.shuffle(toastFrames);
+    keys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A);
+    keys[1] = game.input.keyboard.addKey(Phaser.Keyboard.B);
+    keys[2] = game.input.keyboard.addKey(Phaser.Keyboard.C);
+    keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+    keys[4] = game.input.keyboard.addKey(Phaser.Keyboard.E);
+    keys[5] = game.input.keyboard.addKey(Phaser.Keyboard.F);
+    keys[6] = game.input.keyboard.addKey(Phaser.Keyboard.G);
+    keys[7] = game.input.keyboard.addKey(Phaser.Keyboard.H);
+    keys[8] = game.input.keyboard.addKey(Phaser.Keyboard.I);
+    keys[9] = game.input.keyboard.addKey(Phaser.Keyboard.J);
+    keys[10]= game.input.keyboard.addKey(Phaser.Keyboard.K);
+    keys[11]= game.input.keyboard.addKey(Phaser.Keyboard.L);
+    keys[12]= game.input.keyboard.addKey(Phaser.Keyboard.M);
+    keys[13]= game.input.keyboard.addKey(Phaser.Keyboard.N);
+    keys[14]= game.input.keyboard.addKey(Phaser.Keyboard.O);
+    keys[15]= game.input.keyboard.addKey(Phaser.Keyboard.P);
+    keys[16]= game.input.keyboard.addKey(Phaser.Keyboard.Q);
+    keys[17]= game.input.keyboard.addKey(Phaser.Keyboard.R);
+    keys[18]= game.input.keyboard.addKey(Phaser.Keyboard.S);
+    keys[19]= game.input.keyboard.addKey(Phaser.Keyboard.T);
+    keys[20]= game.input.keyboard.addKey(Phaser.Keyboard.U);
+    keys[21]= game.input.keyboard.addKey(Phaser.Keyboard.V);
+    keys[22]= game.input.keyboard.addKey(Phaser.Keyboard.W);
+    keys[23]= game.input.keyboard.addKey(Phaser.Keyboard.X);
+    keys[24]= game.input.keyboard.addKey(Phaser.Keyboard.Y);
+    keys[25]= game.input.keyboard.addKey(Phaser.Keyboard.Z);
 
-    //  we'll create an empty group to hold all the platforms.
-    //  this will make it easy to do things to all the platforms at once
-    platforms = game.add.group();
+    cat = game.add.sprite(game.width*0.5, game.height*0.5, 'cat');
+    cat.anchor = new Phaser.Point(0.5,0.5);
 
-    //  Now we're ready to make the platforms, using a loop where i will go from 0 to numPlatforms
-    for (var i=0;i<numPlatforms; i++){
+    indicators = game.add.group();
+    for (var i=0;i<3; i++){
 
-        //  create a new platform, storing it in a temporary local variable 'newPlatform' 
-        var newPlatform = platforms.create(0,0,'platformSprite');
+        var newPlatform = indicators.create(480+i*40,150,'platformSprite');
 
-        //  by default, the position of a sprite is its top-left corner, 
-        //  but in this case I want to center the platform
-        //  around its x-position, so I move its 'anchor' to the middle of the sprite
         newPlatform.anchor.setTo(0.5,0.5);
 
-        newPlatform.frame = toastFrames[i];
-
-        newPlatform.alreadyBouncedOn = false;
-
+        newPlatform.frame = i;
     }
+
+    items = game.add.group();
+    items.create(0,0);
 
     menu = game.add.tileSprite(0, 0, 1024, 1024, 'menubackground');
     menu.alpha=0.9;
@@ -122,44 +144,10 @@ function create() {
 function initialize(){
     //  set the player's score to zero
     score = 0;
-    life=100;
-    scoreText = "";
-    scoreDisplay.y=20;
+    life = 100;
 
-    // smiley.scale = new Phaser.Point(0.1,0.1);
-    // smiley.body.setCircle(smiley.width/2,-smiley.width/2,-smiley.height/2);
-    //these are arbitrary #s that just work.
-    // smiley.body.setCircle(smiley.width/2);//,smiley.width*4+60,smiley.height*4+60);
-
-    // Phaser.ArrayUtils.shuffle(toastFrames);
     placeToasts();
 }
-
-function placeToasts(){
-    var i=0;
-    platforms.forEach(function(p){
-        i = i+1;
-
-        var horizontal_location = 200+i*40;
-        var vertical_location = 150;
-        if (i>3){
-            vertical_location=300;
-            horizontal_location = 200 + (i-3)*40;
-        }
-
-        p.position = new Phaser.Point(horizontal_location,vertical_location);
-
-        p.tint=0x999999;
-        p.alreadyBouncedOn = false;
-        p.revive();
-    });
-
-    platforms.children[3].alpha=0;
-    platforms.children[3].tint=0xffffff;
-    platforms.children[4].alpha=0;
-    platforms.children[4].tint=0xffffff;
-}
-
 
 function update() {
 
@@ -179,14 +167,14 @@ function update() {
                 console.log("incoming");
                 var which = Math.floor(Math.random()*2);
                 // platforms.children[3+which].tint=0xffffff;
-                platforms.children[3+which].alpha=1;
+                items.children[3+which].alpha=1;
                 clear=false;
                 target=3+which;
             }
         }
         life = life-0.2;
         for (var i=0;i<numPlatforms; i++){
-            platforms.children[cycle].tint=0xffffff;
+            indicators.children[cycle].tint=0xffffff;
 
 
             if (keys[i].isDown){
@@ -194,27 +182,27 @@ function update() {
                 if (i==cycle){ //you hit the right key
                     if (life<100)
                         life = life+1;
-                    platforms.children[cycle].tint=0x999999;
+                    indicators.children[cycle].tint=0x999999;
                     cycle=cycle+1;
                     if (cycle>2)
                         cycle=0;
                 }
                 if (i==target && !clear){
                     // platforms.children[target].tint=0x999999;
-                    platforms.children[target].alpha=0;
+                    items.children[target].alpha=0;
                     clear=true;
                     score = score+1;
                 }
 
                 var j=0;
-                platforms.forEach(function(p){
+                indicators.forEach(function(p){
                     if (j==i) 
                         p.scale=new Phaser.Point(1.2,1.2);
                     j=j+1;
                 });
             } else {
                 var j=0;
-                platforms.forEach(function(p){
+                indicators.forEach(function(p){
                     if (j==i) 
                         p.scale=new Phaser.Point(1,1);
                     j=j+1;
@@ -227,7 +215,7 @@ function update() {
             
         } else{ 
             mode = 'end';
-            menu.alpha=0.8;
+            menu.alpha=0.9;
             endMenu.alpha=1;
         }
     }else if (mode == 'end'){
