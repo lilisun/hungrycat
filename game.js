@@ -1,17 +1,20 @@
 /*
 todo:
-    tutorial
+    tutorial/menus
     score and life bars
     assets
+        items are like cakes and things cus those are cute
     make it so items don't overlap
+
+    AGL keeps up walk cycle, you only move towards items if you're walking?
+        ok i tried this and it is....not really...good
+
 
 future maybes:
     make them type words instead of hit indiv letters
 
 theme/skin:
-    agl maintains walk cycle of a cat. if you stop doing it the cat stops and then also starts degenerating
-        (like the outline gets shakier)
-        (cuz it's DYING FROM HUNGER)
+    agl maintains walk cycle of a cat. if you stop doing it the cat stops
     other stuff is stuff the cat is passing. for now just letters, maybe words later
     pick up/comically eat the thing
     at the end, when the cat is full, meets a human who squats down to pet it :D
@@ -53,7 +56,7 @@ function preload() {
     //parameters are name, location, width, height
     game.load.spritesheet('indicators', 'assets/indicators.png', 40, 42);
     game.load.spritesheet('items', 'assets/items.png', 63, 59);
-    game.load.spritesheet('cat', 'assets/cat.png', 270, 214);
+    game.load.spritesheet('cat', 'assets/cat-sheet.png', 300, 220);
 
     //ui stuff
     game.load.image('menubackground','assets/menub.png');
@@ -114,6 +117,9 @@ function create() {
     //the cat
     cat = game.add.sprite(game.width*0.5, game.height*0.5, 'cat');
     cat.anchor = new Phaser.Point(0.5,0.5);
+    cat.animations.add('walk',[0,1,2,3,4,5],8,true);
+    cat.frame=0;
+    // cat.animations.play('walk');
 
     //the cycle indicators (basically ui)
     indicators = game.add.group();
@@ -212,9 +218,14 @@ function checkCycle(key){
         if (life<100){
             life = life+1;
             indicators.children[cycle].alpha = 0.25;
-            cycle=cycle+1;
-            if (cycle>2)
-                cycle=0;
+            cycle=(cycle+1)%3;
+            cat.frame = (cat.frame+1)%6;
+            for (var i=0; i<ifItemsMoving.length; i++){
+                if (ifItemsMoving[i]){
+                    var item =items.children[i];
+                    item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
+                }
+            }
         }
     }
 }
@@ -223,7 +234,7 @@ function update() {
 
     if (mode == 'game'){
     
-        life = life-0.2;
+        life = life-0.15;
         scoreDisplay.setText("score: "+score+"\nlife: "+Math.round(life));
 
         //deal with the items
@@ -231,7 +242,7 @@ function update() {
             if (ifItemsMoving[i]){ //if the item is moving, keep it moving
                 var item = items.children[i];
                 // console.log(i);
-                item.position.x = item.position.x - 2;
+                // item.position.x = item.position.x - 2;
 
                 //check if item is past left edge of screen
                 if (item.position.x < -item.width){ 
