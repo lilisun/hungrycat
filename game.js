@@ -119,7 +119,7 @@ function create() {
     cat.anchor = new Phaser.Point(0.5,0.5);
     cat.animations.add('walk',[0,1,2,3,4,5],8,true);
     cat.frame=0;
-    // cat.animations.play('walk');
+    cat.animations.play('walk');
 
     //the cycle indicators (basically ui)
     indicators = game.add.group();
@@ -219,13 +219,13 @@ function checkCycle(key){
             life = life+1;
             indicators.children[cycle].alpha = 0.25;
             cycle=(cycle+1)%3;
-            cat.frame = (cat.frame+1)%6;
-            for (var i=0; i<ifItemsMoving.length; i++){
-                if (ifItemsMoving[i]){
-                    var item =items.children[i];
-                    item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
-                }
-            }
+            // cat.frame = (cat.frame+1)%6;
+            // for (var i=0; i<ifItemsMoving.length; i++){
+            //     if (ifItemsMoving[i]){
+            //         var item =items.children[i];
+            //         item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
+            //     }
+            // }
         }
     }
 }
@@ -234,7 +234,7 @@ function update() {
 
     if (mode == 'game'){
     
-        life = life-0.15;
+        life = life-0.2;
         scoreDisplay.setText("score: "+score+"\nlife: "+Math.round(life));
 
         //deal with the items
@@ -242,7 +242,7 @@ function update() {
             if (ifItemsMoving[i]){ //if the item is moving, keep it moving
                 var item = items.children[i];
                 // console.log(i);
-                // item.position.x = item.position.x - 2;
+                item.position.x = item.position.x - 2;
 
                 //check if item is past left edge of screen
                 if (item.position.x < -item.width){ 
