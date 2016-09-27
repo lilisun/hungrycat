@@ -1,14 +1,9 @@
 /*
 todo:
     tutorial/menus
-    score and life bars
     assets
         items are like cakes and things cus those are cute
     make it so items don't overlap
-
-    AGL keeps up walk cycle, you only move towards items if you're walking?
-        ok i tried this and it is....not really...good
-
 
 future maybes:
     make them type words instead of hit indiv letters
@@ -17,10 +12,6 @@ theme/skin:
     agl maintains walk cycle of a cat. if you stop doing it the cat stops
     other stuff is stuff the cat is passing. for now just letters, maybe words later
     pick up/comically eat the thing
-    at the end, when the cat is full, meets a human who squats down to pet it :D
-
-    food ideas:
-    pork bun, cheese, bokchoy, eggs, fish, beef, cookie, duck, donut, zucchini, rice
 */
 
 var game = new Phaser.Game(1000,400, Phaser.AUTO, 'content', 
@@ -41,9 +32,12 @@ var items; //group for incoming objects
 var ifItemsMoving = []; //to keep track of which items are moving
 var ifItemsEdible = []; //if the item is in eating distance ;)
 
+var start; //start time
 var score; //how much stuff u ate
-var life; //life energy or whatever
-var scoreDisplay; //the text object thingie
+var life; //time left
+var timeDisplay; //timer display
+var scoreDisplayE; //the score bar background
+var scoreDisplayF; //the score bar filler
 
 var cycle=0; //keep track of the cycling 3 letters
  
@@ -62,6 +56,8 @@ function preload() {
     game.load.image('menubackground','assets/menub.png');
     game.load.image('menuStart','assets/menus.png');
     game.load.image('menuEnd','assets/menue.png');
+    game.load.spritesheet('scoreEmpty', 'assets/scoreEmpty.png', 200, 20);
+    game.load.spritesheet('scoreFull', 'assets/scoreFull.png', 200, 20);
 
     //sound
     game.load.audio('jumpSound', 'assets/bloop.wav');
@@ -119,7 +115,12 @@ function create() {
     cat.anchor = new Phaser.Point(0.5,0.5);
     cat.animations.add('walk',[0,1,2,3,4,5],8,true);
     cat.frame=0;
-    cat.animations.play('walk');
+    // cat.animations.play('walk');
+
+    //score ui
+    scoreDisplayE = game.add.sprite(game.width - 250, 30, 'scoreEmpty');
+    scoreDisplayF = game.add.sprite(game.width - 250, 30, 'scoreFull');
+    scoreDisplayF.scale.x=0;
 
     //the cycle indicators (basically ui)
     indicators = game.add.group();
@@ -141,7 +142,7 @@ function create() {
 
     //the other UI
     menu = game.add.tileSprite(0, 0, 1024, 1024, 'menubackground');
-    menu.alpha=0.9;
+    menu.alpha=0;//.9;
     startMenu = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400, 'menuStart');
     startMenu.alpha=1;
     endMenuLose = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400,'menuEnd');
@@ -153,20 +154,23 @@ function create() {
     var style = {font: 'bold 20pt monospace',
                  fill: '#8D703D',
                  align: 'left'};
-    scoreDisplay = game.add.text(game.width/2,20, "score: \nlife: ", style);
-    scoreDisplay.anchor.setTo(0,0);
+    timeDisplay = game.add.text(30,20, "1:00", style);
+    timeDisplay.anchor.setTo(0,0);
 
     //sound
     jumpAudio = game.add.audio('jumpSound');
 
+    game.time.events.loop(Phaser.Timer.SECOND, updateCounter, this);
+
     initialize();
+
 }
 
 //to reinitialize everything
 function initialize(){
     //  set the player's score to zero
     score = 0;
-    life = 100;
+    life = 60;//100;
 }
 
 //for eating the items
@@ -184,6 +188,7 @@ function keyUpItem(key){
         //EAT IT!!!!!!
         console.log("im gonna eat it.");
         score = score+1;
+        scoreDisplayF.scale.x = scoreDisplayF.scale.x + 0.1;
         ifItemsMoving[itemN] = false;
         ifItemsEdible[itemN] = false;
         item.position.x = game.width;
@@ -215,34 +220,36 @@ function keyUp(key){
 //checks if players are doing the AGL cycle correctly
 function checkCycle(key){
     if (key==cycle){
-        if (life<100){
-            life = life+1;
-            indicators.children[cycle].alpha = 0.25;
-            cycle=(cycle+1)%3;
-            // cat.frame = (cat.frame+1)%6;
-            // for (var i=0; i<ifItemsMoving.length; i++){
-            //     if (ifItemsMoving[i]){
-            //         var item =items.children[i];
-            //         item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
-            //     }
-            // }
+        indicators.children[cycle].alpha = 0.25;
+        cycle=(cycle+1)%3;
+        cat.frame = (cat.frame+1)%6;
+        for (var i=0; i<ifItemsMoving.length; i++){
+            if (ifItemsMoving[i]){
+                var item =items.children[i];
+                item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
+            }
         }
     }
+}
+
+function updateCounter(){
+    life--;
 }
 
 function update() {
 
     if (mode == 'game'){
-    
-        life = life-0.2;
-        scoreDisplay.setText("score: "+score+"\nlife: "+Math.round(life));
+        zero="";
+        if (life<10)
+            zero="0";
+        timeDisplay.setText("0:"+zero+life);
 
         //deal with the items
         for (var i=0; i<ifItemsMoving.length; i++){
             if (ifItemsMoving[i]){ //if the item is moving, keep it moving
                 var item = items.children[i];
                 // console.log(i);
-                item.position.x = item.position.x - 2;
+                // item.position.x = item.position.x - 2;
 
                 //check if item is past left edge of screen
                 if (item.position.x < -item.width){ 
@@ -285,8 +292,8 @@ function update() {
             endMenuWin.alpha=1;
         }
 
-        //lose if no life
-        if (life < 1) {
+        // lose if no life
+        if (life <= 0) {
             console.log("lose");
             mode = 'end';
             menu.alpha=0.9;
