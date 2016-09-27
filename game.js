@@ -3,7 +3,6 @@ todo:
     tutorial/menus
     assets
         items are like cakes and things cus those are cute
-    make it so items don't overlap
 
 future maybes:
     make them type words instead of hit indiv letters
@@ -21,8 +20,7 @@ var mode = 'start'; //'start','end', or 'game'
 
 var menu; //the menu background, to fade stuff out
 var startMenu; //the actual text/image that goes on the menus
-var endMenuWin;
-var endMenuLose;
+var endMenu;
 
 var cat;
 
@@ -31,15 +29,18 @@ var indicators; //group for the AGL indicators, for input feedback
 var items; //group for incoming objects
 var ifItemsMoving = []; //to keep track of which items are moving
 var ifItemsEdible = []; //if the item is in eating distance ;)
+var isSomethingAtTheFront;
+var latestPosition; //x position of the latest item going across the screen
 
-var start; //start time
+var scoreFull = 10;
+var totalTime = 60;
 var score; //how much stuff u ate
 var life; //time left
 var timeDisplay; //timer display
 var scoreDisplayE; //the score bar background
 var scoreDisplayF; //the score bar filler
 
-var cycle=0; //keep track of the cycling 3 letters
+var cycle; //keep track of the cycling 3 letters
  
 var cycleKeys=[]; //keyboard input for cycle keys
 var keys=[]; //keyboard input for the rest of them
@@ -139,23 +140,20 @@ function create() {
         var temp = items.create(game.width, game.height*0.6, 'items');
         temp.frame=i;
     }
+    
+    var style = {font: '20pt Verdana',
+                 fill: '#ff4f4f',
+                 align: 'left'};
+    timeDisplay = game.add.text(30,20, "1:00", style);
+    timeDisplay.anchor.setTo(0,0);
 
     //the other UI
     menu = game.add.tileSprite(0, 0, 1024, 1024, 'menubackground');
     menu.alpha=0;//.9;
     startMenu = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400, 'menuStart');
     startMenu.alpha=1;
-    endMenuLose = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400,'menuEnd');
-    endMenuLose.alpha=0;
-    //TEMP!!! TODO!!
-    endMenuWin = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400,'menuEnd');
-    endMenuWin.alpha=0;
-    
-    var style = {font: 'bold 20pt monospace',
-                 fill: '#8D703D',
-                 align: 'left'};
-    timeDisplay = game.add.text(30,20, "1:00", style);
-    timeDisplay.anchor.setTo(0,0);
+    endMenu = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400,'menuEnd');
+    endMenu.alpha=0;
 
     //sound
     jumpAudio = game.add.audio('jumpSound');
@@ -170,7 +168,17 @@ function create() {
 function initialize(){
     //  set the player's score to zero
     score = 0;
-    life = 60;//100;
+    life = totalTime;
+    scoreDisplayF.scale.x=0;
+    cycle = 0;
+    isSomethingAtTheFront=false;
+    latestPosition=0;
+
+    for (var i=0; i<keys.length; i++){
+        ifItemsMoving[i]=false;
+        ifItemsEdible[i]=false;
+        items.children[i].x=game.width;
+    }
 }
 
 //for eating the items
@@ -182,13 +190,13 @@ function keyUpItem(key){
     if (key.keyCode > 71) itemN = itemN-1;
     if (key.keyCode > 76) itemN = itemN-1;
 
-    console.log("ummm " +itemN);
+    // console.log("ummm " +itemN);
     var item = items.children[itemN];
     if (ifItemsEdible[itemN]){
         //EAT IT!!!!!!
         console.log("im gonna eat it.");
         score = score+1;
-        scoreDisplayF.scale.x = scoreDisplayF.scale.x + 0.1;
+        scoreDisplayF.scale.x = scoreDisplayF.scale.x + (1/scoreFull);
         ifItemsMoving[itemN] = false;
         ifItemsEdible[itemN] = false;
         item.position.x = game.width;
@@ -211,7 +219,15 @@ function keyUp(key){
             menu.alpha=0;
             startMenu.alpha=0;
         }
-    } else if (mode == 'game'){
+    }else if (mode == 'end'){
+        if (key==0){
+            console.log("start over");
+            mode = 'game';
+            menu.alpha=0;
+            endMenu.alpha=0;
+            initialize();
+        }
+    }else if (mode == 'game'){
         indicators.children[key].scale = new Phaser.Point(1,1);   
         checkCycle(key);          
     }
@@ -223,10 +239,14 @@ function checkCycle(key){
         indicators.children[cycle].alpha = 0.25;
         cycle=(cycle+1)%3;
         cat.frame = (cat.frame+1)%6;
+        isSomethingAtTheFront=false;
         for (var i=0; i<ifItemsMoving.length; i++){
             if (ifItemsMoving[i]){
                 var item =items.children[i];
-                item.position.x=item.position.x-10; //hmm this keeps it moving only if the cat is moving. hmm.
+                item.position.x=item.position.x-20; //hmm this keeps it moving only if the cat is moving. hmm.
+                if (latestPosition < item.position.x+item.width){
+                    latestPosition=item.position.x+item.width;
+                }
             }
         }
     }
@@ -269,12 +289,17 @@ function update() {
         }
 
         //figure out if an itme is moving across screen
-        if (Math.floor(Math.random()*100)==1){ // chance another is coming
+        if (Math.floor(Math.random()*100)==1 && !isSomethingAtTheFront){ // chance another is coming
             var which = Math.floor(Math.random()*keys.length); //determins which item
             if (!ifItemsMoving[which]){
                 // console.log(which + " incoming");
-                items.children[which].position.x=game.width-10; //move item to right edge of screen
+                items.children[which].position.x=game.width; //move item to right edge of screen
                 ifItemsMoving[which]=true;
+                isSomethingAtTheFront=true;
+                if (latestPosition > game.width){
+                    items.children[which].position.x=latestPosition;
+                }
+                latestPosition=game.width+items.children[which].width;
             }
         }
 
@@ -289,7 +314,8 @@ function update() {
             console.log("win");
             mode = 'end';
             menu.alpha=0.9;
-            endMenuWin.alpha=1;
+            endMenu.frame=0;
+            endMenu.alpha=1;
         }
 
         // lose if no life
@@ -297,7 +323,8 @@ function update() {
             console.log("lose");
             mode = 'end';
             menu.alpha=0.9;
-            endMenuLose.alpha=1;
+            endMenu.frame=0;
+            endMenu.alpha=1;
         }
     }else if (mode == 'end'){
         // if (keys[1].isDown){
