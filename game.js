@@ -42,6 +42,7 @@ var scoreDisplayF; //the score bar filler
 
 var cycle; //keep track of the cycling 3 letters
  
+var spacebar;
 var cycleKeys=[]; //keyboard input for cycle keys
 var keys=[]; //keyboard input for the rest of them
 
@@ -67,6 +68,10 @@ function preload() {
 }
 
 function create() {
+
+    //spacebar
+    spacebar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    spacebar.onUp.add(space, this);
 
     //  cycle keys
     cycleKeys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A);
@@ -210,24 +215,24 @@ function keyDown(key){
     }
 }
 
+function space(key){
+    if (mode == 'start'){
+        mode = 'game';
+        menu.alpha=0;
+        startMenu.alpha=0;
+    }else if (mode == 'end'){
+        console.log("start over");
+        mode = 'game';
+        menu.alpha=0;
+        endMenu.alpha=0;
+        initialize();
+    }
+}
+
 //for when someone releases AGL
 //checks if it's the next in sequence and moves the cycle ahead accordingly
 function keyUp(key){
-    if (mode == 'start'){
-        if (key == 0) {
-            mode = 'game';
-            menu.alpha=0;
-            startMenu.alpha=0;
-        }
-    }else if (mode == 'end'){
-        if (key==0){
-            console.log("start over");
-            mode = 'game';
-            menu.alpha=0;
-            endMenu.alpha=0;
-            initialize();
-        }
-    }else if (mode == 'game'){
+    if (mode == 'game'){
         indicators.children[key].scale = new Phaser.Point(1,1);   
         checkCycle(key);          
     }
@@ -300,6 +305,7 @@ function update() {
                     items.children[which].position.x=latestPosition;
                 }
                 latestPosition=game.width+items.children[which].width;
+                console.log("spawned a "+which+" at position "+items.children[which].position.x);
             }
         }
 
@@ -310,7 +316,7 @@ function update() {
         
         //lose & win conditions
         //win if score is high enough
-        if (score > 99){
+        if (score >= scoreFull){
             console.log("win");
             mode = 'end';
             menu.alpha=0.9;
