@@ -13,12 +13,11 @@ theme/skin:
     pick up/comically eat the thing
 */
 
-var game = new Phaser.Game(1000,400, Phaser.AUTO, 'content', 
+var game = new Phaser.Game(800,400, Phaser.AUTO, 'content', 
     { preload: preload, create: create, update: update, render: render });
 
 var mode = 'start'; //'start','end', or 'game'
 
-var menu; //the menu background, to fade stuff out
 var startMenu; //the actual text/image that goes on the menus
 var endMenu;
 
@@ -51,13 +50,13 @@ var jumpAudio; //the sound when the player jumps
 function preload() {
     //parameters are name, location, width, height
     game.load.spritesheet('indicators', 'assets/indicators.png', 40, 42);
-    game.load.spritesheet('items', 'assets/items.png', 63, 59);
+    game.load.spritesheet('items', 'assets/items.png', 80, 120);
     game.load.spritesheet('cat', 'assets/cat-sheet.png', 300, 220);
 
     //ui stuff
-    game.load.image('menubackground','assets/menub.png');
+    game.load.image('background','assets/background.png');
     game.load.image('menuStart','assets/menus.png');
-    game.load.image('menuEnd','assets/menue.png');
+    game.load.spritesheet('menuEnd','assets/menue.png',360,200);
     game.load.spritesheet('scoreEmpty', 'assets/scoreEmpty.png', 200, 20);
     game.load.spritesheet('scoreFull', 'assets/scoreFull.png', 200, 20);
 
@@ -68,6 +67,7 @@ function preload() {
 }
 
 function create() {
+    game.add.tileSprite(0,0,800,400,'background');
 
     //spacebar
     spacebar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -117,7 +117,7 @@ function create() {
     }
 
     //the cat
-    cat = game.add.sprite(game.width*0.5, game.height*0.5, 'cat');
+    cat = game.add.sprite(game.width*0.30, game.height*0.5, 'cat');
     cat.anchor = new Phaser.Point(0.5,0.5);
     cat.animations.add('walk',[0,1,2,3,4,5],8,true);
     cat.frame=0;
@@ -131,7 +131,7 @@ function create() {
     //the cycle indicators (basically ui)
     indicators = game.add.group();
     for (var i=0;i<3; i++){
-        var newPlatform = indicators.create(480+i*40,150,'indicators');
+        var newPlatform = indicators.create(200+i*40,150,'indicators');
         newPlatform.anchor.setTo(0.5,0.5);
         newPlatform.frame = i;
     }
@@ -142,7 +142,7 @@ function create() {
         ifItemsMoving[i]=false;
         ifItemsEdible[i]=false;
 
-        var temp = items.create(game.width, game.height*0.6, 'items');
+        var temp = items.create(game.width, game.height*0.5, 'items');
         temp.frame=i;
     }
     
@@ -153,11 +153,9 @@ function create() {
     timeDisplay.anchor.setTo(0,0);
 
     //the other UI
-    menu = game.add.tileSprite(0, 0, 1024, 1024, 'menubackground');
-    menu.alpha=0;//.9;
-    startMenu = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400, 'menuStart');
+    startMenu = game.add.tileSprite(game.width*0.5, game.height*0.50-200/2-15, 360,200, 'menuStart');
     startMenu.alpha=1;
-    endMenu = game.add.tileSprite(game.width*0.5-800/2, game.height*0.50-400/2, 800,400,'menuEnd');
+    endMenu = game.add.sprite(game.width*0.5, game.height*0.50-200/2-15, 'menuEnd');
     endMenu.alpha=0;
 
     //sound
@@ -218,12 +216,10 @@ function keyDown(key){
 function space(key){
     if (mode == 'start'){
         mode = 'game';
-        menu.alpha=0;
         startMenu.alpha=0;
     }else if (mode == 'end'){
         console.log("start over");
         mode = 'game';
-        menu.alpha=0;
         endMenu.alpha=0;
         initialize();
     }
@@ -283,12 +279,15 @@ function update() {
                 }
 
                 //check if it's within target area
-                if (item.position.x > 552 && item.position.x < 647){
+                if (item.position.x > (cat.position.x+cat.width/2-125) && 
+                    item.position.x < (cat.position.x+cat.width/2-25)){
                     ifItemsEdible[i] = true;
-                    item.scale=new Phaser.Point(1.1,1.1);
+                    // item.scale=new Phaser.Point(1.1,1.1);
+                    item.frame=i+23;
                 }else {
                     ifItemsEdible[i] = false;
-                    item.scale=new Phaser.Point(1,1);
+                    // item.scale=new Phaser.Point(1,1);
+                    item.frame=i;
                 }
             }
         }
@@ -319,7 +318,6 @@ function update() {
         if (score >= scoreFull){
             console.log("win");
             mode = 'end';
-            menu.alpha=0.9;
             endMenu.frame=0;
             endMenu.alpha=1;
         }
@@ -328,8 +326,7 @@ function update() {
         if (life <= 0) {
             console.log("lose");
             mode = 'end';
-            menu.alpha=0.9;
-            endMenu.frame=0;
+            endMenu.frame=1;
             endMenu.alpha=1;
         }
     }else if (mode == 'end'){
