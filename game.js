@@ -3,14 +3,10 @@ todo:
     tutorial/menus
     assets
         items are like cakes and things cus those are cute
+    four keys instead of three
+    cat mouth open
+    draining life
 
-future maybes:
-    make them type words instead of hit indiv letters
-
-theme/skin:
-    agl maintains walk cycle of a cat. if you stop doing it the cat stops
-    other stuff is stuff the cat is passing. for now just letters, maybe words later
-    pick up/comically eat the thing
 */
 
 var game = new Phaser.Game(800,400, Phaser.AUTO, 'content', 
@@ -49,14 +45,14 @@ var jumpAudio; //the sound when the player jumps
 
 function preload() {
     //parameters are name, location, width, height
-    game.load.spritesheet('indicators', 'assets/indicators.png', 40, 42);
+    game.load.spritesheet('indicators', 'assets/indicators.png', 50, 50);
     game.load.spritesheet('items', 'assets/items.png', 80, 120);
     game.load.spritesheet('cat', 'assets/cat-sheet.png', 300, 220);
 
     //ui stuff
     game.load.image('background','assets/background.png');
     game.load.image('menuStart','assets/menus.png');
-    game.load.spritesheet('menuEnd','assets/menue.png',360,200);
+    game.load.spritesheet('menuEnd','assets/menue.png',325,275);
     game.load.spritesheet('scoreEmpty', 'assets/scoreEmpty.png', 200, 20);
     game.load.spritesheet('scoreFull', 'assets/scoreFull.png', 200, 20);
 
@@ -153,9 +149,9 @@ function create() {
     timeDisplay.anchor.setTo(0,0);
 
     //the other UI
-    startMenu = game.add.tileSprite(game.width*0.5, game.height*0.50-200/2-15, 360,200, 'menuStart');
+    startMenu = game.add.tileSprite(game.width*0.54, 0, 325,275, 'menuStart');
     startMenu.alpha=1;
-    endMenu = game.add.sprite(game.width*0.5, game.height*0.50-200/2-15, 'menuEnd');
+    endMenu = game.add.sprite(game.width*0.54, 0, 'menuEnd');
     endMenu.alpha=0;
 
     //sound
@@ -293,7 +289,7 @@ function update() {
         }
 
         //figure out if an itme is moving across screen
-        if (Math.floor(Math.random()*100)==1 && !isSomethingAtTheFront){ // chance another is coming
+        if (Math.floor(Math.random()*50)==1 && !isSomethingAtTheFront){ // chance another is coming
             var which = Math.floor(Math.random()*keys.length); //determins which item
             if (!ifItemsMoving[which]){
                 // console.log(which + " incoming");
