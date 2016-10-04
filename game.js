@@ -1,11 +1,12 @@
 /*
 todo:
-    tutorial/menus
     assets
         items are like cakes and things cus those are cute
-    four keys instead of three
-    cat mouth open
-    draining life
+    parallax + moving ground
+
+
+    draining life? another way to give urgency? or make people's fingers overwhelmed, more timewise?
+    like a more present time pressure
 
 */
 
@@ -16,6 +17,7 @@ var mode = 'start'; //'start','end', or 'game'
 
 var startMenu; //the actual text/image that goes on the menus
 var endMenu;
+var tutorial;
 
 var cat;
 
@@ -27,7 +29,7 @@ var ifItemsEdible = []; //if the item is in eating distance ;)
 var isSomethingAtTheFront;
 var latestPosition; //x position of the latest item going across the screen
 
-var scoreFull = 10;
+var scoreFull = 100;
 var totalTime = 60;
 var score; //how much stuff u ate
 var life; //time left
@@ -51,6 +53,7 @@ function preload() {
 
     //ui stuff
     game.load.image('background','assets/background.png');
+    game.load.image('tutorial','assets/tutorial.png');
     game.load.image('menuStart','assets/menus.png');
     game.load.spritesheet('menuEnd','assets/menue.png',325,275);
     game.load.spritesheet('scoreEmpty', 'assets/scoreEmpty.png', 200, 20);
@@ -71,42 +74,44 @@ function create() {
 
     //  cycle keys
     cycleKeys[0] = game.input.keyboard.addKey(Phaser.Keyboard.A);
-    cycleKeys[1] = game.input.keyboard.addKey(Phaser.Keyboard.G);
-    cycleKeys[2]= game.input.keyboard.addKey(Phaser.Keyboard.L);
+    cycleKeys[1] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+    cycleKeys[2] = game.input.keyboard.addKey(Phaser.Keyboard.J);
+    cycleKeys[3] = game.input.keyboard.addKey(Phaser.Keyboard.L);
 
     //doing this weird function thing so i can pass in other parameters
     cycleKeys[0].onDown.add(function(){keyDown(0);}, this); 
     cycleKeys[1].onDown.add(function(){keyDown(1);}, this);
     cycleKeys[2].onDown.add(function(){keyDown(2);}, this);
+    cycleKeys[3].onDown.add(function(){keyDown(3);}, this);
     cycleKeys[0].onUp.add(function(){keyUp(0);}, this);
     cycleKeys[1].onUp.add(function(){keyUp(1);}, this);
     cycleKeys[2].onUp.add(function(){keyUp(2);}, this);
+    cycleKeys[3].onUp.add(function(){keyUp(3);}, this);
 
     //item keys
     //note keycode for A is 65
     keys[0] = game.input.keyboard.addKey(Phaser.Keyboard.B);
     keys[1] = game.input.keyboard.addKey(Phaser.Keyboard.C);
-    keys[2] = game.input.keyboard.addKey(Phaser.Keyboard.D);
-    keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.E);
-    keys[4] = game.input.keyboard.addKey(Phaser.Keyboard.F);
+    keys[2] = game.input.keyboard.addKey(Phaser.Keyboard.E);
+    keys[3] = game.input.keyboard.addKey(Phaser.Keyboard.F);
+    keys[4] = game.input.keyboard.addKey(Phaser.Keyboard.G);
     keys[5] = game.input.keyboard.addKey(Phaser.Keyboard.H);
     keys[6] = game.input.keyboard.addKey(Phaser.Keyboard.I);
-    keys[7] = game.input.keyboard.addKey(Phaser.Keyboard.J);
-    keys[8] = game.input.keyboard.addKey(Phaser.Keyboard.K);
-    keys[9] = game.input.keyboard.addKey(Phaser.Keyboard.M);
-    keys[10]= game.input.keyboard.addKey(Phaser.Keyboard.N);
-    keys[11]= game.input.keyboard.addKey(Phaser.Keyboard.O);
-    keys[12]= game.input.keyboard.addKey(Phaser.Keyboard.P);
-    keys[13]= game.input.keyboard.addKey(Phaser.Keyboard.Q);
-    keys[14]= game.input.keyboard.addKey(Phaser.Keyboard.R);
-    keys[15]= game.input.keyboard.addKey(Phaser.Keyboard.S);
-    keys[16]= game.input.keyboard.addKey(Phaser.Keyboard.T);
-    keys[17]= game.input.keyboard.addKey(Phaser.Keyboard.U);
-    keys[18]= game.input.keyboard.addKey(Phaser.Keyboard.V);
-    keys[19]= game.input.keyboard.addKey(Phaser.Keyboard.W);
-    keys[20]= game.input.keyboard.addKey(Phaser.Keyboard.X);
-    keys[21]= game.input.keyboard.addKey(Phaser.Keyboard.Y);
-    keys[22]= game.input.keyboard.addKey(Phaser.Keyboard.Z);
+    keys[7] = game.input.keyboard.addKey(Phaser.Keyboard.K);
+    keys[8] = game.input.keyboard.addKey(Phaser.Keyboard.M);
+    keys[9] = game.input.keyboard.addKey(Phaser.Keyboard.N);
+    keys[10]= game.input.keyboard.addKey(Phaser.Keyboard.O);
+    keys[11]= game.input.keyboard.addKey(Phaser.Keyboard.P);
+    keys[12]= game.input.keyboard.addKey(Phaser.Keyboard.Q);
+    keys[13]= game.input.keyboard.addKey(Phaser.Keyboard.R);
+    keys[14]= game.input.keyboard.addKey(Phaser.Keyboard.S);
+    keys[15]= game.input.keyboard.addKey(Phaser.Keyboard.T);
+    keys[16]= game.input.keyboard.addKey(Phaser.Keyboard.U);
+    keys[17]= game.input.keyboard.addKey(Phaser.Keyboard.V);
+    keys[18]= game.input.keyboard.addKey(Phaser.Keyboard.W);
+    keys[19]= game.input.keyboard.addKey(Phaser.Keyboard.X);
+    keys[20]= game.input.keyboard.addKey(Phaser.Keyboard.Y);
+    keys[21]= game.input.keyboard.addKey(Phaser.Keyboard.Z);
 
     for (var i=0; i<keys.length; i++){
         keys[i].onDown.add(keyUpItem,this);
@@ -126,7 +131,7 @@ function create() {
 
     //the cycle indicators (basically ui)
     indicators = game.add.group();
-    for (var i=0;i<3; i++){
+    for (var i=0;i<cycleKeys.length; i++){
         var newPlatform = indicators.create(200+i*40,150,'indicators');
         newPlatform.anchor.setTo(0.5,0.5);
         newPlatform.frame = i;
@@ -138,7 +143,7 @@ function create() {
         ifItemsMoving[i]=false;
         ifItemsEdible[i]=false;
 
-        var temp = items.create(game.width, game.height*0.5, 'items');
+        var temp = items.create(game.width, game.height*0.63, 'items');
         temp.frame=i;
     }
     
@@ -147,10 +152,13 @@ function create() {
                  align: 'left'};
     timeDisplay = game.add.text(30,20, "1:00", style);
     timeDisplay.anchor.setTo(0,0);
+    timeDisplay.alpha=0;
 
     //the other UI
     startMenu = game.add.tileSprite(game.width*0.54, 0, 325,275, 'menuStart');
     startMenu.alpha=1;
+    tutorial = game.add.tileSprite(0, 0, 800, 400, 'tutorial');
+    tutorial.alpha=0;
     endMenu = game.add.sprite(game.width*0.54, 0, 'menuEnd');
     endMenu.alpha=0;
 
@@ -166,7 +174,7 @@ function create() {
 //to reinitialize everything
 function initialize(){
     //  set the player's score to zero
-    score = 0;
+    score = 50;
     life = totalTime;
     scoreDisplayF.scale.x=0;
     cycle = 0;
@@ -185,8 +193,9 @@ function keyUpItem(key){
     //65 is keycode for A, -1 since A isn't there
     var itemN = key.keyCode-65-1;
 
-    //adjusting for G and L missing. 71 is G, 76 is L
-    if (key.keyCode > 71) itemN = itemN-1;
+    //adjusting for D, J and L missing. d 68, j 74 l 76
+    if (key.keyCode > 68) itemN = itemN-1;
+    if (key.keyCode > 74) itemN = itemN-1;
     if (key.keyCode > 76) itemN = itemN-1;
 
     // console.log("ummm " +itemN);
@@ -194,11 +203,14 @@ function keyUpItem(key){
     if (ifItemsEdible[itemN]){
         //EAT IT!!!!!!
         console.log("im gonna eat it.");
-        score = score+1;
-        scoreDisplayF.scale.x = scoreDisplayF.scale.x + (1/scoreFull);
+        score = score+10;
+        if (score > scoreFull){
+            score = scoreFull;
+        }
         ifItemsMoving[itemN] = false;
         ifItemsEdible[itemN] = false;
         item.position.x = game.width;
+        cat.frame = cat.frame + 6;
     }
 }
 
@@ -211,8 +223,14 @@ function keyDown(key){
 
 function space(key){
     if (mode == 'start'){
-        mode = 'game';
+        mode = 'tutorial';
+        tutorial.alpha=1;
         startMenu.alpha=0;
+    }else if (mode == 'tutorial'){
+        mode = 'game';
+        tutorial.alpha=0;
+        life = totalTime;    
+        score = scoreFull/2;    
     }else if (mode == 'end'){
         console.log("start over");
         mode = 'game';
@@ -234,9 +252,11 @@ function keyUp(key){
 function checkCycle(key){
     if (key==cycle){
         indicators.children[cycle].alpha = 0.25;
-        cycle=(cycle+1)%3;
+        cycle=(cycle+1)%4;
         cat.frame = (cat.frame+1)%6;
+
         isSomethingAtTheFront=false;
+
         for (var i=0; i<ifItemsMoving.length; i++){
             if (ifItemsMoving[i]){
                 var item =items.children[i];
@@ -250,7 +270,8 @@ function checkCycle(key){
 }
 
 function updateCounter(){
-    life--;
+    // life--;
+    score = score - 2;
 }
 
 function update() {
@@ -260,6 +281,7 @@ function update() {
         if (life<10)
             zero="0";
         timeDisplay.setText("0:"+zero+life);
+        scoreDisplayF.scale.x = score / 100;
 
         //deal with the items
         for (var i=0; i<ifItemsMoving.length; i++){
@@ -279,7 +301,7 @@ function update() {
                     item.position.x < (cat.position.x+cat.width/2-25)){
                     ifItemsEdible[i] = true;
                     // item.scale=new Phaser.Point(1.1,1.1);
-                    item.frame=i+23;
+                    item.frame=i+items.children.length;
                 }else {
                     ifItemsEdible[i] = false;
                     // item.scale=new Phaser.Point(1,1);
@@ -306,8 +328,9 @@ function update() {
 
         //UI for cycle keys
         indicators.children[cycle].alpha = 1;
-        indicators.children[(cycle+1)%3].alpha = 0.25;
-        indicators.children[(cycle+2)%3].alpha = 0.25;
+        indicators.children[(cycle+1)%4].alpha = 0.25;
+        indicators.children[(cycle+2)%4].alpha = 0.25;
+        indicators.children[(cycle+3)%4].alpha = 0.25;
         
         //lose & win conditions
         //win if score is high enough
@@ -319,25 +342,15 @@ function update() {
         }
 
         // lose if no life
-        if (life <= 0) {
+        if (life <= 0 || score <= 0) {
             console.log("lose");
             mode = 'end';
             endMenu.frame=1;
             endMenu.alpha=1;
         }
     }else if (mode == 'end'){
-        // if (keys[1].isDown){
-        //     mode = 'game';
-        //     initialize();
-        //     menu.alpha=0;
-        //     endMenu.alpha=0;
-        // }
     }
-  
-    
-
 }
 
 function render(){
-
 }
