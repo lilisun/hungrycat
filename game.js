@@ -1,13 +1,20 @@
 /*
 todo:
     assets
-        items are like cakes and things cus those are cute
-    parallax + moving ground
+        cake ('-') normal (>~<) close (>o<) eating zone (oOo) pressed key
+    parallax + moving ground ?
 
+    make it seem like the game is embedded in the page ?
 
-    draining life? another way to give urgency? or make people's fingers overwhelmed, more timewise?
-    like a more present time pressure
-
+notes from class 10/4
+    tweak rules so it's more playful, and less routine
+        routine = not skillful play and you can like, zone out
+        give player more option (like there's some pie?)
+        or some process to eating food
+    do more to convey state
+    too easy to eat pie, since you can just stop walking
+        it's tuned way too easy rn, wow
+    make the pies more worried, more scared, more transition into that fear as they enter the Eating Zone
 */
 
 var game = new Phaser.Game(800,400, Phaser.AUTO, 'content', 
@@ -20,6 +27,7 @@ var endMenu;
 var tutorial;
 
 var cat;
+var poop;
 
 var indicators; //group for the AGL indicators, for input feedback
 
@@ -50,12 +58,13 @@ function preload() {
     game.load.spritesheet('indicators', 'assets/indicators.png', 50, 50);
     game.load.spritesheet('items', 'assets/items.png', 80, 120);
     game.load.spritesheet('cat', 'assets/cat-sheet.png', 300, 220);
+    game.load.spritesheet('poop', 'assets/poop-sheet.png', 100, 107);
 
     //ui stuff
     game.load.image('background','assets/background.png');
     game.load.image('tutorial','assets/tutorial.png');
     game.load.image('menuStart','assets/menus.png');
-    game.load.spritesheet('menuEnd','assets/menue.png',325,275);
+    game.load.spritesheet('menuEnd','assets/menue.png',800,400);
     game.load.spritesheet('scoreEmpty', 'assets/scoreEmpty.png', 200, 20);
     game.load.spritesheet('scoreFull', 'assets/scoreFull.png', 200, 20);
 
@@ -124,6 +133,13 @@ function create() {
     cat.frame=0;
     // cat.animations.play('walk');
 
+    //the poop
+    poop = game.add.sprite(game.width*0.1, game.height*0.65, 'poop');
+    poop.anchor = new Phaser.Point(0.5,0.5);
+    poop.animations.add('poop',[0,1,2,3,4,5,6,7],8,false);
+    // poop.animations.play('poop');
+    poop.frame=7;
+
     //score ui
     scoreDisplayE = game.add.sprite(game.width - 250, 30, 'scoreEmpty');
     scoreDisplayF = game.add.sprite(game.width - 250, 30, 'scoreFull');
@@ -159,7 +175,7 @@ function create() {
     startMenu.alpha=1;
     tutorial = game.add.tileSprite(0, 0, 800, 400, 'tutorial');
     tutorial.alpha=0;
-    endMenu = game.add.sprite(game.width*0.54, 0, 'menuEnd');
+    endMenu = game.add.sprite(0, 0, 'menuEnd');
     endMenu.alpha=0;
 
     //sound
@@ -180,6 +196,11 @@ function initialize(){
     cycle = 0;
     isSomethingAtTheFront=false;
     latestPosition=0;
+
+    indicators.children[0].frame = 0;
+    indicators.children[1].frame = 1;
+    indicators.children[2].frame = 2;
+    indicators.children[3].frame = 3;
 
     for (var i=0; i<keys.length; i++){
         ifItemsMoving[i]=false;
@@ -217,7 +238,8 @@ function keyUpItem(key){
 //for when someone presses AGL down, so we can scale it to give input feedback
 function keyDown(key){
     if (mode == 'game'){
-        indicators.children[key].scale = new Phaser.Point(1.2,1.2);   
+        indicators.children[key].scale = new Phaser.Point(1.2,1.2);
+        checkCycle(key);
     }
 }
 
@@ -243,15 +265,18 @@ function space(key){
 //checks if it's the next in sequence and moves the cycle ahead accordingly
 function keyUp(key){
     if (mode == 'game'){
-        indicators.children[key].scale = new Phaser.Point(1,1);   
-        checkCycle(key);          
+        indicators.children[key].scale = new Phaser.Point(1,1);
+        indicators.children[0].frame = 0;
+        indicators.children[1].frame = 1;
+        indicators.children[2].frame = 2;
+        indicators.children[3].frame = 3;
     }
 }
 
 //checks if players are doing the AGL cycle correctly
 function checkCycle(key){
     if (key==cycle){
-        indicators.children[cycle].alpha = 0.25;
+        indicators.children[cycle].alpha = 1;//0.25;
         cycle=(cycle+1)%4;
         cat.frame = (cat.frame+1)%6;
 
@@ -266,6 +291,16 @@ function checkCycle(key){
                 }
             }
         }
+    }else {
+        //poop out!
+        poop.alpha=1;
+        poop.animations.stop('poop',true);
+        poop.animations.play('poop');
+        score = score-10;
+        indicators.children[0].frame = 8;
+        indicators.children[1].frame = 9;
+        indicators.children[2].frame = 10;
+        indicators.children[3].frame = 11;
     }
 }
 
@@ -328,9 +363,9 @@ function update() {
 
         //UI for cycle keys
         indicators.children[cycle].alpha = 1;
-        indicators.children[(cycle+1)%4].alpha = 0.25;
-        indicators.children[(cycle+2)%4].alpha = 0.25;
-        indicators.children[(cycle+3)%4].alpha = 0.25;
+        indicators.children[(cycle+1)%4].alpha = 0.5;
+        indicators.children[(cycle+2)%4].alpha = 0.5;
+        indicators.children[(cycle+3)%4].alpha = 0.5;
         
         //lose & win conditions
         //win if score is high enough
@@ -344,6 +379,8 @@ function update() {
         // lose if no life
         if (life <= 0 || score <= 0) {
             console.log("lose");
+            score = 0;
+            scoreDisplayF.scale.x=0;
             mode = 'end';
             endMenu.frame=1;
             endMenu.alpha=1;
