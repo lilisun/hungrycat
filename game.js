@@ -1,8 +1,9 @@
 /*
 todo:
     assets
-        cake ('-') normal (>~<) close (>o<) eating zone (oOo) pressed key
+        cake ('-') normal (>~<) close (>o<) eating zone (oOo + big) pressed key
     parallax + moving ground ?
+    health bar blinks when you poop?
 
     make it seem like the game is embedded in the page ?
 
@@ -160,7 +161,7 @@ function create() {
         ifItemsEdible[i]=false;
 
         var temp = items.create(game.width, game.height*0.63, 'items');
-        temp.frame=i;
+        temp.frame=i+22;
     }
     
     var style = {font: '20pt Verdana',
@@ -221,6 +222,7 @@ function keyUpItem(key){
 
     // console.log("ummm " +itemN);
     var item = items.children[itemN];
+
     if (ifItemsEdible[itemN]){
         //EAT IT!!!!!!
         console.log("im gonna eat it.");
@@ -293,6 +295,7 @@ function checkCycle(key){
         }
     }else {
         //poop out!
+        game.camera.shake(0.01,1000);
         poop.alpha=1;
         poop.animations.stop('poop',true);
         poop.animations.play('poop');
@@ -336,11 +339,14 @@ function update() {
                     item.position.x < (cat.position.x+cat.width/2-25)){
                     ifItemsEdible[i] = true;
                     // item.scale=new Phaser.Point(1.1,1.1);
-                    item.frame=i+items.children.length;
+                    item.frame=i+3*items.children.length;
+                }else if (item.position.x > (cat.position.x+cat.width/2-25) &&
+                    item.position.x < (cat.position.x+cat.width/2+200)){
+                    item.frame = i + items.children.length;
                 }else {
                     ifItemsEdible[i] = false;
                     // item.scale=new Phaser.Point(1,1);
-                    item.frame=i;
+                    item.frame=i+22;
                 }
             }
         }
