@@ -1,12 +1,4 @@
 /*
-todo:
-    assets
-        cake ('-') normal (>~<) close (>o<) eating zone (oOo + big) pressed key
-    parallax + moving ground ?
-    health bar blinks when you poop?
-
-    make it seem like the game is embedded in the page ?
-
 notes from class 10/4
     tweak rules so it's more playful, and less routine
         routine = not skillful play and you can like, zone out
@@ -16,7 +8,17 @@ notes from class 10/4
     too easy to eat pie, since you can just stop walking
         it's tuned way too easy rn, wow
     make the pies more worried, more scared, more transition into that fear as they enter the Eating Zone
+
+todo
+    sound. sound. soundsoundsound sound. sound
+
+things to ask ppl when they playtest this weekend
+    feedback? what would you have liked to know and when?
+    observe their reaction to the foods
+    and the poop
+    ask for help with background music...
 */
+var shake = false;
 
 var game = new Phaser.Game(800,400, Phaser.AUTO, 'content', 
     { preload: preload, create: create, update: update, render: render });
@@ -160,7 +162,7 @@ function create() {
         ifItemsMoving[i]=false;
         ifItemsEdible[i]=false;
 
-        var temp = items.create(game.width, game.height*0.63, 'items');
+        var temp = items.create(game.width, game.height*0.65, 'items');
         temp.frame=i+22;
     }
     
@@ -295,7 +297,7 @@ function checkCycle(key){
         }
     }else {
         //poop out!
-        game.camera.shake(0.01,1000);
+        if (shake) game.camera.shake(0.01,1000);
         poop.alpha=1;
         poop.animations.stop('poop',true);
         poop.animations.play('poop');
@@ -342,7 +344,7 @@ function update() {
                     item.frame=i+3*items.children.length;
                 }else if (item.position.x > (cat.position.x+cat.width/2-25) &&
                     item.position.x < (cat.position.x+cat.width/2+200)){
-                    item.frame = i + items.children.length;
+                    item.frame = i + 2*items.children.length;
                 }else {
                     ifItemsEdible[i] = false;
                     // item.scale=new Phaser.Point(1,1);
