@@ -15,6 +15,7 @@
         text-align: center;
         font-family: monospace;
         font-size:10pt;
+        color:#735c47;
     }
     canvas {
         margin:auto;
@@ -23,23 +24,77 @@
         width:800px;
         margin:auto;
         padding-top:3%;
-        text-align:left;
+        text-align:right;
     }
 
     a{
         text-decoration:none;
-        color:#d00;
+        color:#900;
     }a:hover{
-        color:#500;
+        color:#f00;
         text-decoration:none;
     }
+    button{
+        background-color:white;
+        border:0;
+    }
+    #audio{
+
+    }
     </style>
+
+    <script type="text/javascript">
+        function updateSButton(){ // for shake button
+            if (shake){
+                document.getElementById("shakeon").style.border= "1px solid black";
+                document.getElementById("shakeoff").style.border= "0px solid black";
+            }else{
+                document.getElementById("shakeon").style.border= "0px solid black";
+                document.getElementById("shakeoff").style.border= "1px solid black";
+            }
+        }
+        function updateAButton(){ // for audio button
+            if (music){
+                document.getElementById("soundon").style.border= "1px solid black";
+                document.getElementById("soundoff").style.border= "0px solid black";
+                playMusic();
+            }else{
+                document.getElementById("soundon").style.border= "0px solid black";
+                document.getElementById("soundoff").style.border= "1px solid black";
+                pauseMusic();
+            }
+        }
+
+        function playMusic(){
+            if (document.getElementById("audio").paused && mode == 'game')
+                document.getElementById("audio").play();
+        }
+        function pauseMusic(){
+            if (!document.getElementById("audio").paused)
+                document.getElementById("audio").pause();
+        }
+    </script>
 </head> 
 <body> 
+    <div id="notes" style="padding-top:0">
+        my cat is hungry<br><small><small>featuring margot</small></small>
+    </div>
+    <br><br>
     <div id="content" >
     </div>
     <div id="notes">
-        notes
+        <small><small>background music from <a href="http://freemusicarchive.org/music/Podington_Bear/Bon_Voyage_1995/">Podington Bear</a></small></small><br><br>   
+        sound: 
+        <button type="button" onclick="music=true; updateAButton();" id="soundon" style="border:1px solid black">on</button>
+        <button type="button" onclick="music=false; updateAButton();" id="soundoff" style="border:0px solid black">off</button><br><br>
+
+        <audio id="audio">
+            <source src="assets/Podington_Bear_-_Bit_Rio.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        screen shake: 
+        <button type="button" onclick="shake=true; updateSButton();" id="shakeon" style="border:1px solid black">on</button>
+        <button type="button" onclick="shake=false; updateSButton();" id="shakeoff" style="border:0px solid black">off</button>
     </div>
 </body>
 </html> 

@@ -10,15 +10,15 @@ notes from class 10/4
     make the pies more worried, more scared, more transition into that fear as they enter the Eating Zone
 
 todo
-    sound. sound. soundsoundsound sound. sound
+    animate end screens?
+    health bar flash?
 
-things to ask ppl when they playtest this weekend
-    feedback? what would you have liked to know and when?
-    observe their reaction to the foods
-    and the poop
-    ask for help with background music...
 */
-var shake = false;
+var shake = true; //these two are toggled by stuff in the html cus i'm a fancy piece of pie
+var music = true;
+
+var FOODSCORE = 6.25;
+var POOPSCORE = 6.25;
 
 var game = new Phaser.Game(800,400, Phaser.AUTO, 'content', 
     { preload: preload, create: create, update: update, render: render });
@@ -54,7 +54,8 @@ var spacebar;
 var cycleKeys=[]; //keyboard input for cycle keys
 var keys=[]; //keyboard input for the rest of them
 
-var jumpAudio; //the sound when the player jumps
+var fartAudio; //the sound when the player jumps
+var eatAudio;
 
 function preload() {
     //parameters are name, location, width, height
@@ -72,12 +73,19 @@ function preload() {
     game.load.spritesheet('scoreFull', 'assets/scoreFull.png', 200, 20);
 
     //sound
-    game.load.audio('jumpSound', 'assets/bloop.wav');
+    // game.load.audio('backgroundMusic', 'assets/bloop.wav');
+    game.load.audio('fart', 'assets/fart.ogg');
+    game.load.audio('eat', 'assets/eat.ogg');
+    // game.load.audio('jumpSound', 'assets/bloop.wav');
 
     game.stage.backgroundColor = '#eee'; 
 }
 
 function create() {
+    //sound
+    fartAudio = game.add.audio('fart');
+    eatAudio = game.add.audio('eat');
+
     game.add.tileSprite(0,0,800,400,'background');
 
     //spacebar
@@ -134,13 +142,11 @@ function create() {
     cat.anchor = new Phaser.Point(0.5,0.5);
     cat.animations.add('walk',[0,1,2,3,4,5],8,true);
     cat.frame=0;
-    // cat.animations.play('walk');
 
     //the poop
     poop = game.add.sprite(game.width*0.1, game.height*0.65, 'poop');
     poop.anchor = new Phaser.Point(0.5,0.5);
     poop.animations.add('poop',[0,1,2,3,4,5,6,7],8,false);
-    // poop.animations.play('poop');
     poop.frame=7;
 
     //score ui
@@ -180,9 +186,6 @@ function create() {
     tutorial.alpha=0;
     endMenu = game.add.sprite(0, 0, 'menuEnd');
     endMenu.alpha=0;
-
-    //sound
-    jumpAudio = game.add.audio('jumpSound');
 
     game.time.events.loop(Phaser.Timer.SECOND, updateCounter, this);
 
@@ -228,7 +231,8 @@ function keyUpItem(key){
     if (ifItemsEdible[itemN]){
         //EAT IT!!!!!!
         console.log("im gonna eat it.");
-        score = score+10;
+        if (music) eatAudio.play();
+        score = score+FOODSCORE;
         if (score > scoreFull){
             score = scoreFull;
         }
@@ -254,6 +258,7 @@ function space(key){
         startMenu.alpha=0;
     }else if (mode == 'tutorial'){
         mode = 'game';
+        if (music) playMusic();
         tutorial.alpha=0;
         life = totalTime;    
         score = scoreFull/2;    
@@ -262,6 +267,7 @@ function space(key){
         mode = 'game';
         endMenu.alpha=0;
         initialize();
+        if (music) playMusic();
     }
 }
 
@@ -297,11 +303,12 @@ function checkCycle(key){
         }
     }else {
         //poop out!
-        if (shake) game.camera.shake(0.01,1000);
+        if (shake) game.camera.shake(0.0025,250);
+        if (music) fartAudio.play();
         poop.alpha=1;
         poop.animations.stop('poop',true);
         poop.animations.play('poop');
-        score = score-10;
+        score = score-POOPSCORE;
         indicators.children[0].frame = 8;
         indicators.children[1].frame = 9;
         indicators.children[2].frame = 10;
@@ -380,6 +387,7 @@ function update() {
         if (score >= scoreFull){
             console.log("win");
             mode = 'end';
+            if (music) pauseMusic();
             endMenu.frame=0;
             endMenu.alpha=1;
         }
@@ -389,6 +397,7 @@ function update() {
             console.log("lose");
             score = 0;
             scoreDisplayF.scale.x=0;
+            if (music) pauseMusic();
             mode = 'end';
             endMenu.frame=1;
             endMenu.alpha=1;
